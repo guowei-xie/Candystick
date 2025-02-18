@@ -21,8 +21,8 @@ ui <- fluidPage(
   
   navbarPage(
     title = cnf$title,
-    tabPanel("Train", train_ui("train")),
-    tabPanel("Battle", battle_ui("battle"))
+    tabPanel("训练", train_ui("train")),
+    tabPanel("对战", battle_ui("battle"))
   )
 )
 
