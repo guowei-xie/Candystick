@@ -3,7 +3,7 @@ library(shinythemes)
 library(shinyjs)
 library(tidyverse)
 library(config)
-
+source("src/custom.R")
 source("ui/train_ui.R")
 source("ui/battle_ui.R")
 source("module/train_server.R")
@@ -14,10 +14,10 @@ cnf <- config::get()
 ui <- fluidPage(
   theme = shinytheme(cnf$theme),
   useShinyjs(), 
-  # tags$head(
-  #   tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
-  #   tags$script(src = "scripts.js")
-  # ),
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
+    tags$script(src = "scripts.js")
+  ),
   
   navbarPage(
     title = cnf$title,
