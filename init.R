@@ -33,6 +33,7 @@ if (!tbl_exists(db, "user_account")) {
   dbExecute(db, "
   CREATE TABLE user_account (
     user_id TEXT PRIMARY KEY,
+    initial REAL,
     asset REAL,
     update_time TEXT,
     FOREIGN KEY(user_id) REFERENCES user_info(user_id)

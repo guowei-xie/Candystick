@@ -4,6 +4,13 @@ train_server <- function(input, output, session) {
     Sys.Date() - lubridate::years(.cnf$recent_years), "%Y%m%d"
   )
   range_rows <- .cnf$recent_days + .cnf$train_days
+  # Account --------------------------------------------------------------------
+  user_id <- "default"
+  # 账户信息
+  account <- reactiveVal(get_user_account(user_id))
+  
+  
+  
   # Data -----------------------------------------------------------------------
   # 随机基础行情数据
   change <- reactiveVal(0)
@@ -45,19 +52,35 @@ train_server <- function(input, output, session) {
     
     stk_daily() |>
       left_join(basic, by = "ts_code") |>
-      left_join(stk_limit, by = c("ts_code", "trade_date")) |>
+      left_join(stk_limit, by = c("ts_code", "trade_date"))
       # 添加：因子指标
-      # 筛选：整体范围
+  })
+  
+  # 训练数据
+  train_dat <- reactive({
+    req(fct_dat())
+    fct_dat() |>
       filter(trade_date >= start_date) |>
-      # 筛选：随机区间
       random_range(n = range_rows)
   })
   
-  # 训练窗口数据
-  train_dat <- reactive({
-    
+  
+  # Step -----------------------------------------------------------------------
+  # 计步器与开盘状态控制
+  step_counter <- reactiveVal(0) 
+  step_status <- reactiveVal("open") 
+  observeEvent(step_counter(), {
+    step <- step_counter()
+    if(step %% 2) {
+      step_status("open")
+    }else{
+      step_status("close")
+    }
   })
+  
+  
 
+  
 
  
 
