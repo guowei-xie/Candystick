@@ -2,6 +2,11 @@ default:
   dev: TRUE
   title: Candystick
   theme: yeti
+
+database:
+  path: db/
+  name: candy.db
+  
   
 train:  
   market: c("主板", "创业板", "北交所", "科创板")
