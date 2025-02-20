@@ -1,19 +1,28 @@
 train_server <- function(input, output, session) {
   .cnf <- config::get(config = "train")
-  start_date <- format(
-    Sys.Date() - lubridate::years(.cnf$recent_years), "%Y%m%d"
-  )
-  range_rows <- .cnf$recent_days + .cnf$train_days
-  # Account --------------------------------------------------------------------
   user_id <- "default"
-  # 账户信息
-  account <- reactiveVal(get_user_account(user_id))
+  # Get account info -----------------------------------------------------------
+  account_info <- reactive({
+    account <- get_user_account(user_id)
+    if(!nrow(account)){
+      account <- data.frame(
+        user_id = user_id,
+        initial = .cnf$initial,
+        asset = .cnf$initial,
+        nums = 0,
+        update_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+      )
+    }
+    return(account)
+  })
   
+  asset <- reactiveVal(account_info()$asset)
   
-  
-  # Data -----------------------------------------------------------------------
-  # 随机基础行情数据
+  # Data processing ------------------------------------------------------------
+  start_date <- format(Sys.Date() - lubridate::years(.cnf$recent_years), "%Y%m%d")
+  range_rows <- .cnf$recent_days + .cnf$train_days
   change <- reactiveVal(0)
+  # 随机基础行情数据
   stk_daily <- eventReactive(change(), {
     markets <- eval(parse(text = .cnf$market))
 
@@ -52,34 +61,42 @@ train_server <- function(input, output, session) {
     
     stk_daily() |>
       left_join(basic, by = "ts_code") |>
-      left_join(stk_limit, by = c("ts_code", "trade_date"))
+      left_join(stk_limit, by = c("ts_code", "trade_date")) |>
       # 添加：因子指标
-  })
-  
-  # 训练数据
-  train_dat <- reactive({
-    req(fct_dat())
-    fct_dat() |>
+      # 筛选：波段范围
       filter(trade_date >= start_date) |>
       random_range(n = range_rows)
+      
   })
   
   
-  # Step -----------------------------------------------------------------------
-  # 计步器与开盘状态控制
+  # Dynamic control ------------------------------------------------------------
+  # 计步与状态
   step_counter <- reactiveVal(0) 
   step_status <- reactiveVal("open") 
   observeEvent(step_counter(), {
     step <- step_counter()
-    if(step %% 2) {
+    if(step %% 1) {
       step_status("open")
     }else{
       step_status("close")
     }
   })
   
+  # 移动窗口数据
+  train_dat <- reactive({
+    req(fct_dat())
+    req(step_counter())
+    df <- fct_dat()
+    mv <- floor(step_counter())
+    start <- .cnf$train_days - mv
+    end <- .cnf$train_days + .cnf$recent_days - mv
+    
+    if(start > 0) {
+      return(df[start:end, ])
+    }
+  })
   
-
   
 
  

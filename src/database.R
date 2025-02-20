@@ -13,7 +13,7 @@ sql_query <- function(sql){
 
 get_user_account <- function(user_id){
   sql <- str_glue(
-    "SELECT * FROM user_info WHERE user_id = '{user_id}';"
+    "SELECT * FROM user_account WHERE user_id = '{user_id}';"
   )
   sql_query(sql)
 }
