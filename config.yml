@@ -7,12 +7,9 @@ database:
   path: db/
   name: candy.db
   
-  
 train:  
   initial: 100000 
   market: c("主板", "创业板", "北交所", "科创板")
   recent_years: 3
   recent_days: 60
   train_days: 60
-
-  

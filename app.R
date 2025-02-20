@@ -1,9 +1,9 @@
 library(shiny)
 library(shinythemes)
+library(shinyWidgets)
 library(shinyjs)
 library(tidyverse)
 library(config)
-source("src/custom.R")
 source("src/helper.R")
 source("src/database.R")
 source("ui/train_ui.R")
@@ -20,11 +20,6 @@ basic <- try_api(api, api_name = "stock_basic")
 ui <- fluidPage(
   theme = shinytheme(cnf$theme),
   useShinyjs(), 
-  tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
-    tags$script(src = "scripts.js")
-  ),
-  
   navbarPage(
     title = cnf$title,
     tabPanel("训练", train_ui("train")),

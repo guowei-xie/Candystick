@@ -1,5 +1,6 @@
 train_server <- function(input, output, session) {
   .cnf <- config::get(config = "train")
+  ns <- session$ns
   user_id <- "default"
   # Get account info -----------------------------------------------------------
   account_info <- reactive({
@@ -16,7 +17,7 @@ train_server <- function(input, output, session) {
     return(account)
   })
   
-  asset <- reactiveVal(account_info()$asset)
+  # asset <- reactiveVal(account_info()$asset)
   
   # Data processing ------------------------------------------------------------
   start_date <- format(Sys.Date() - lubridate::years(.cnf$recent_years), "%Y%m%d")
@@ -69,9 +70,8 @@ train_server <- function(input, output, session) {
       
   })
   
-  
   # Dynamic control ------------------------------------------------------------
-  # 计步与状态
+  # 计步状态
   step_counter <- reactiveVal(0) 
   step_status <- reactiveVal("open") 
   observeEvent(step_counter(), {
@@ -97,15 +97,40 @@ train_server <- function(input, output, session) {
     }
   })
   
+  # Action observe -------------------------------------------------------------
+  # 自定义配置面板
+  observeEvent(input$config_btn, {
+    shinyjs::toggle("config_div")
+  })
+  
+  # 快捷填价标签配置
+  observeEvent(input$price_config, {
+    print(input$price_config)
+    
+    
+    updateRadioGroupButtons(
+      session,
+      inputId = "price_tag",
+      choices = input$price_config
+    )
+  })
+  
+  
+  # 快捷填价
+  observe({
+    updateNumericInput(
+      session, 
+      inputId = "price",
+      value = input$price_tag
+    )
+  })
   
 
  
 
 
 
-  observeEvent(input$config_btn, {
-    shinyjs::toggle("config_div")
-  })
+  
 
   output$asset <- renderUI({
     asset <- format(100000, big.mark = ",", scientific = FALSE)

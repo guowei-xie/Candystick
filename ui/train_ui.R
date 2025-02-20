@@ -5,22 +5,34 @@ train_ui <- function(id) {
     mainPanel(
       actionButton(
         inputId = ns("config_btn"),
-        label = tags$small("指标配置"),
+        label = tags$small("自定义配置"),
         icon = icon("sliders-h"),
         style = "background-color: transparent; border: none; color: grey"
       ),
+      
       hidden(
         div(
           id = ns("config_div"),
           br(),
-          checkboxGroupInput(
-            inputId = ns("MA_config"),
-            label = "MA：",
-            choices = c("MA5", "MA10", "MA20", "MA30", "MA60", "MA90", "MA120", "MA180"),
-            selected = c("MA5", "MA10", "MA20", "MA30"),
-            inline = TRUE
+          treeInput(
+            inputId = ns("fct_config"),
+            label = "选用因子指标:",
+            choices = create_tree(cities),
+            returnValue = "text",
+            closeDepth = 0,
+            selected = NULL
+          ),
+          treeInput(
+            inputId = ns("price_config"),
+            label = "选用快捷填价:",
+            choices = create_tree(cities),
+            returnValue = "text",
+            closeDepth = 0,
+            selected = NULL
           )
         ),
+        
+        
         hr()
       ),
       br(),
@@ -39,11 +51,13 @@ train_ui <- function(id) {
         )
       ),
       hr(),
-      tagSelectorInput(
+      
+      radioGroupButtons(
         inputId = ns("price_tag"),
         label = "快捷填价",
-        choices = c("MA5", "MA10", "Boll上轨", "Boll下轨")
+        choices = list("暂无" = 0)
       ),
+    
       fluidRow(
         style = "display: flex; align-items: center;",
         column(
