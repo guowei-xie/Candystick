@@ -29,7 +29,7 @@ train_ui <- function(id) {
       radioGroupButtons(
         inputId = ns("price_tag"),
         label = "快捷填价",
-        choices = list("暂无" = 0)
+        choices = "待选用"
       ),
 
       # Action buttons ---------------------------------------------------------
@@ -91,18 +91,18 @@ train_ui <- function(id) {
           treeInput(
             inputId = ns("fct_config"),
             label = "选用因子指标:",
-            choices = conv_yml2tree("custom.yml", "factor_indicator"),
+            choices = conv_yml2tree(custom, "factor_indicator"),
             returnValue = "text",
             closeDepth = 0,
-            selected = NULL
+            selected = str_split(custom$default_selected$factor_indicator, ",")[[1]]
           ),
           treeInput(
             inputId = ns("price_config"),
-            label = "选用快捷填价:",
-            choices = conv_yml2tree("custom.yml", "price_tag"), ,
+            label = "选用填价标签:",
+            choices = conv_yml2tree(custom, "price_tag"),
             returnValue = "text",
             closeDepth = 0,
-            selected = NULL
+            selected = str_split(custom$default_selected$price_tag, ",")[[1]]
           )
         )
       )

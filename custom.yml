@@ -7,3 +7,7 @@ price_tag:
   MA相关: 5日均价,10日均价,20日均价,30日均价,60日均价,90日均价,120日均价,180日均价,360日均价 
   Boll相关: Boll上轨价,Boll中轨价,Boll下轨价
   
+default_selected:
+  factor_indicator: 5日均线,10日均线,20日均线,30日均线,Boll上轨线,Boll中轨线,Boll下轨线
+  price_tag: Daily相关, 5日均价,10日均价,20日均价,30日均价,Boll上轨价,Boll中轨价,Boll下轨价
+  

@@ -104,7 +104,7 @@ train_server <- function(input, output, session) {
   })
   
   # 快捷填价标签配置
-  observeEvent(input$price_config, {
+  observe({
     tags <- input$price_config
     updateRadioGroupButtons(
       session,

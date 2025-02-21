@@ -19,11 +19,7 @@ random_range <- function(df, n) {
   return(range)
 }
 
-conv_yml2tree <- function(file, key) {
-  file <- "custom.yml"
-  key <- "factor_indicator"
-  yml <- yaml::yaml.load_file(file)
-  
+conv_yml2tree <- function(yml, key) {
   yml[[key]] |>
     imap_dfr(~ tibble(
       keys = .y,
