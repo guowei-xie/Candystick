@@ -105,25 +105,24 @@ train_server <- function(input, output, session) {
   
   # 快捷填价标签配置
   observeEvent(input$price_config, {
-    print(input$price_config)
-    
-    
+    tags <- input$price_config
     updateRadioGroupButtons(
       session,
       inputId = "price_tag",
-      choices = input$price_config
+      choices = tags[!str_detect(tags, "相关")]
     )
   })
   
-  
-  # 快捷填价
-  observe({
-    updateNumericInput(
-      session, 
-      inputId = "price",
-      value = input$price_tag
-    )
-  })
+  # # 标签查价并填写
+  # observeEvent(input$price_tag, {
+  #   
+  #   print(input$price_tag)
+  #   updateNumericInput(
+  #     session, 
+  #     inputId = "price",
+  #     value = input$price_tag
+  #   )
+  # })
   
 
  
@@ -141,5 +140,10 @@ train_server <- function(input, output, session) {
     gains <- "10%"
     color <- "red"
     accountDisplay("累计收益", gains, color)
+  })
+  
+  output$nums <- renderUI({
+    nums <- "10000"
+    accountDisplay("训练次数", nums)
   })
 }

@@ -1,8 +1,9 @@
 factor_indicator:
-  MA相关: MA5线,MA10线,MA20线,MA30线,MA60线,MA90线,MA120线,MA180线,MA360线 
-  Boll相关: Boll上轨,Boll中轨,Boll下轨
+  MA相关: 5日均线,10日均线,20日均线,30日均线,60日均线,90日均线,120日均线,180日均线,360日均线 
+  Boll相关: Boll上轨线,Boll中轨线,Boll下轨线
 
 price_tag:
-  MA相关: MA5价,MA10价,MA20价,MA30价,MA60价,MA90价,MA120价,MA180价,MA360价
-  Boll相关: Boll上轨价,Boll中轨价,Boll下轨价
   Daily相关: 今日开盘价,昨日收盘价,涨停价,跌停价
+  MA相关: 5日均价,10日均价,20日均价,30日均价,60日均价,90日均价,120日均价,180日均价,360日均价 
+  Boll相关: Boll上轨价,Boll中轨价,Boll下轨价
+  
