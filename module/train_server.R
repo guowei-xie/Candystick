@@ -1,11 +1,11 @@
 train_server <- function(input, output, session) {
-  .cnf <- config::get(config = "train")
   ns <- session$ns
+  .cnf <- config::get(config = "train")
   user_id <- "default"
   # Get account info -----------------------------------------------------------
   account_info <- reactive({
     account <- get_user_account(user_id)
-    if(!nrow(account)){
+    if (!nrow(account)) {
       account <- data.frame(
         user_id = user_id,
         initial = .cnf$initial,
@@ -16,9 +16,9 @@ train_server <- function(input, output, session) {
     }
     return(account)
   })
-  
+
   # asset <- reactiveVal(account_info()$asset)
-  
+
   # Data processing ------------------------------------------------------------
   start_date <- format(Sys.Date() - lubridate::years(.cnf$recent_years), "%Y%m%d")
   range_rows <- .cnf$recent_days + .cnf$train_days
@@ -59,7 +59,7 @@ train_server <- function(input, output, session) {
       api_name = "stk_limit",
       ts_code = stk_code
     )
-    
+
     stk_daily() |>
       left_join(basic, by = "ts_code") |>
       left_join(stk_limit, by = c("ts_code", "trade_date")) |>
@@ -70,20 +70,20 @@ train_server <- function(input, output, session) {
       filter(trade_date >= start_date) |>
       random_range(n = range_rows)
   })
-  
+
   # Dynamic control ------------------------------------------------------------
   # 计步状态
-  step_counter <- reactiveVal(0) 
-  step_status <- reactiveVal("open") 
+  step_counter <- reactiveVal(0)
+  step_status <- reactiveVal("open")
   observeEvent(step_counter(), {
     step <- step_counter()
-    if(step %% 1) {
+    if (step %% 1) {
       step_status("open")
-    }else{
+    } else {
       step_status("close")
     }
   })
-  
+
   # 移动窗口数据
   train_dat <- reactive({
     req(fct_dat())
@@ -92,20 +92,35 @@ train_server <- function(input, output, session) {
     mv <- floor(step_counter())
     start <- .cnf$train_days - mv
     end <- .cnf$train_days + .cnf$recent_days - mv
-    
-    if(start > 0) {
-      return(df[start:end, ])
+
+    if (start > 0) {
+      rng_df <- df[start:end, ]
+
+      # 开盘时，当日因子以开盘价计算
+      if (step_status() == "open") {
+        rng_df[1, "close"] <- rng_df[1, "open"]
+
+        row <- rng_df |>
+          add_factor_MA() |>
+          add_factor_Boll() |>
+          head(1)
+
+        res <- rbind(train_row, rng_df[-1, ])
+      } else {
+        res <- rng_df
+      }
+      return(res)
     }
   })
-  
+
   # Action observe -------------------------------------------------------------
   # 自定义配置面板
   observeEvent(input$config_btn, {
     shinyjs::toggle("config_div")
   })
-  
+
   # 快捷填价标签配置
-  observe({
+  observeEvent(input$price_config, {
     tags <- input$price_config
     updateRadioGroupButtons(
       session,
@@ -113,24 +128,23 @@ train_server <- function(input, output, session) {
       choices = tags[!str_detect(tags, "相关")]
     )
   })
-  
-  # # 标签查价并填写
-  # observeEvent(input$price_tag, {
-  #   
-  #   print(input$price_tag)
-  #   updateNumericInput(
-  #     session, 
-  #     inputId = "price",
-  #     value = input$price_tag
-  #   )
-  # })
-  
 
- 
+  # 价格填写
+  observeEvent(input$price_tag, {
+    row <- head(train_dat(), 1)
+    col <- pluck(custom$colname_mapping, input$price_tag)
+
+    if (!is.null(col)) {
+      updateNumericInput(
+        session,
+        inputId = "price",
+        value = row[[col]]
+      )
+    }
+  })
 
 
 
-  
 
   output$asset <- renderUI({
     asset <- format(100000, big.mark = ",", scientific = FALSE)
@@ -142,7 +156,7 @@ train_server <- function(input, output, session) {
     color <- "red"
     accountDisplay("累计收益", gains, color)
   })
-  
+
   output$nums <- renderUI({
     nums <- "10000"
     accountDisplay("训练次数", nums)

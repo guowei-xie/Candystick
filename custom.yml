@@ -11,3 +11,20 @@ default_selected:
   factor_indicator: 5日均线,10日均线,20日均线,30日均线,Boll上轨线,Boll中轨线,Boll下轨线
   price_tag: Daily相关, 5日均价,10日均价,20日均价,30日均价,Boll上轨价,Boll中轨价,Boll下轨价
   
+colname_mapping:
+  5日均价: ma_5
+  10日均价: ma_10
+  20日均价: ma_20
+  30日均价: ma_30
+  60日均价: ma_60
+  90日均价: ma_90
+  120日均价: ma_120
+  180日均价: ma_180
+  360日均价: ma_360
+  今日开盘价: open
+  昨日收盘价: pre_close
+  涨停价: up_limit
+  跌停价: down_limit
+  Boll上轨价: up_band
+  Boll中轨价: md_band
+  Boll下轨价: dn_band

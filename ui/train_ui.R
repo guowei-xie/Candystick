@@ -1,6 +1,5 @@
 train_ui <- function(id) {
   ns <- NS(id)
-  custom <- yaml::yaml.load_file("custom.yml")
 
   fluidPage(
     mainPanel(
@@ -57,7 +56,7 @@ train_ui <- function(id) {
           )
         ),
         column(
-          width = 3,
+          width = 5,
           div(
             style = "margin-top: -10px;",
             numericInput(

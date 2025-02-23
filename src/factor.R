@@ -10,7 +10,8 @@ add_factor_MA <- function(df, widths = c(5, 10, 20, 30, 60, 90, 120, 180, 360)) 
     
     meta <- paste("df |> mutate(", meta_, ")")
     
-    res <- eval(parse(text = meta))
+    res <- eval(parse(text = meta)) |>
+      mutate(across(where(is.numeric), ~ round(., 2)))
   }else{
     res <- df
   }
@@ -27,5 +28,6 @@ add_factor_Boll <- function(df, n = 20, sd = 2, maType = "SMA") {
       dn_band = BB[, "dn"]
     ) %>%
     select(-BB) |>
-    arrange(desc(trade_date)) |> view()
+    arrange(desc(trade_date)) |>
+    mutate(across(where(is.numeric), ~ round(., 2)))
 }
