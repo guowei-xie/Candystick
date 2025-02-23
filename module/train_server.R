@@ -35,7 +35,7 @@ train_server <- function(input, output, session) {
     daily_dat <- try_api(
       api,
       api_name = "daily",
-      ts_code = skt_code
+      ts_code = stk_code
     )
 
     scope_rows <- daily_dat |>
@@ -64,10 +64,11 @@ train_server <- function(input, output, session) {
       left_join(basic, by = "ts_code") |>
       left_join(stk_limit, by = c("ts_code", "trade_date")) |>
       # 添加：因子指标
+      add_factor_MA() |>
+      add_factor_Boll() |>
       # 筛选：波段范围
       filter(trade_date >= start_date) |>
       random_range(n = range_rows)
-      
   })
   
   # Dynamic control ------------------------------------------------------------

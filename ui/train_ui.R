@@ -1,5 +1,6 @@
 train_ui <- function(id) {
   ns <- NS(id)
+  custom <- yaml::yaml.load_file("custom.yml")
 
   fluidPage(
     mainPanel(
