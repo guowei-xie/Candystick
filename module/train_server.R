@@ -138,7 +138,10 @@ train_server <- function(input, output, session) {
       updateNumericInput(
         session,
         inputId = "price",
-        value = row[[col]]
+        value = row[[col]],
+        max = row$up_limit,
+        min = row$down_limit,
+        step = round(row$pre_close * 0.001, 2)
       )
     }
   })
