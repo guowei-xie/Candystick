@@ -24,14 +24,7 @@ train_ui <- function(id) {
         )
       ),
       hr(),
-
-      # Price tags -------------------------------------------------------------
-      radioGroupButtons(
-        inputId = ns("price_tag"),
-        label = "快捷填价",
-        choices = "待选用"
-      ),
-
+      
       # Action buttons ---------------------------------------------------------
       fluidRow(
         style = "display: flex; align-items: center;",
@@ -51,8 +44,7 @@ train_ui <- function(id) {
             inputId = ns("trade"),
             label = "交易",
             width = "100%",
-            icon = icon("exchange-alt"),
-            style = "background-color: red; color: white; border: none;"
+            icon = icon("exchange-alt")
           )
         ),
         column(
@@ -75,6 +67,13 @@ train_ui <- function(id) {
         width = "100%",
         style = "display: none;",
         icon = icon("play-circle")
+      ),
+      
+      # Price tags -------------------------------------------------------------
+      radioGroupButtons(
+        inputId = ns("price_tag"),
+        label = "快捷填价",
+        choices = "待选用"
       ),
 
       # Configure buttons ------------------------------------------------------

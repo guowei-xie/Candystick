@@ -1,0 +1,24 @@
+/* 确保所有样式都有 !important */
+.btn-buy-conditional {
+  background-color: #cb181d !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-buy-close {
+  background-color: #a50f15 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-sell-conditional {
+  background-color: #238b45 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.btn-sell-close {
+  background-color: #006d2c !important;
+  color: white !important;
+  border: none !important;
+}

@@ -17,6 +17,9 @@ source("global.R")
 ui <- fluidPage(
   theme = shinytheme(cnf$theme),
   useShinyjs(), 
+  tags$head(
+    tags$link(rel = "stylesheet", href = "styles.css")
+  ),
   navbarPage(
     title = cnf$title,
     tabPanel("训练", train_ui("train")),

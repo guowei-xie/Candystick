@@ -23,6 +23,7 @@ colname_mapping:
   360日均价: ma_360
   今日开盘价: open
   昨日收盘价: pre_close
+  今日收盘价: close
   涨停价: up_limit
   跌停价: down_limit
   Boll上轨价: up_band
