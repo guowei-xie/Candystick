@@ -53,6 +53,7 @@ train_server <- function(input, output, session) {
   fct_dat <- reactive({
     req(stk_daily())
     stk_code <- unique(stk_daily()$ts_code)
+    train_id <- uuid::UUIDgenerate()
 
     stk_limit <- try_api(
       api,
@@ -61,6 +62,7 @@ train_server <- function(input, output, session) {
     )
 
     stk_daily() |>
+      mutate(train_id = train_id) |>
       left_join(basic, by = "ts_code") |>
       left_join(stk_limit, by = c("ts_code", "trade_date")) |>
       # 添加：因子指标
@@ -190,12 +192,40 @@ train_server <- function(input, output, session) {
 
   # 交易
   holding <- reactiveVal(0)
+  records <- reactiveVal(data.frame())
   observeEvent(input$trade, {
-    if (holding()) {
-      holding(0)
-    } else {
-      holding(1)
+    req(input$price)
+    price <- input$price
+    row <- head(train_dat(), 1)
+    direction <- ifelse(holding(), "sell", "buy")
+    
+    res <- trade_record(direction, price, row)
+    
+    # 交易记录和持仓状态
+    if(nrow(res)){
+      records(bind_rows(records(), res))
+      holding(as.numeric(direction == "buy"))
     }
+    
+    # 前进步数
+    if(step_status() == "open"){
+      # 开盘状态
+      if(nrow(res)) {
+        # 交易失败，前进0.5
+        step_counter(step_counter() + 0.5)
+      }else{
+        # 交易成功，前进1
+        step_counter(step_counter() + 1)
+      }
+    }
+    
+    if(step_status() == "close"){
+      # 收盘状态
+      # 交易成功与否，前进0.5
+      step_counter(step_counter() + 0.5)
+    }
+    
+    print(records())
   })
 
   
@@ -204,7 +234,7 @@ train_server <- function(input, output, session) {
   observe({
     req(holding(), step_status())
 
-    if (holding() == 0) {
+    if (!holding()) {
       wait_label <- "空仓观望"
       if (step_status() == "open") {
         trd_label <- "条件价买"
