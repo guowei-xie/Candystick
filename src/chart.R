@@ -1,3 +1,4 @@
+# 基础K线图
 candle_chart <- function(df){
   plt_df <- df |>
     mutate(
@@ -38,10 +39,20 @@ candle_chart <- function(df){
       panel.grid.minor = element_blank(),
       panel.grid.major = element_blank(),
       legend.position = "none",
-      panel.border = element_rect(color = "black", size = 1, fill = NA)
+      panel.border = element_rect(color = "black", size = 1, fill = NA),
+      panel.background = element_rect(fill = "white")
     ) +
     labs(x = "", y = "")
 }
 
-
+# 添加横线
+add_price_line <- function(plt, price){
+  plt +
+    geom_hline(
+      yintercept = price,
+      col = "darkgrey",
+      lty = 4,
+      alpha = .5
+    )
+}
 
