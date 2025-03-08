@@ -11,13 +11,6 @@ try_api <- function(func, ...){
   return(res)
 }
 
-random_range <- function(df, n) {
-  df <- arrange(df, desc(trade_date))
-  total <- nrow(df)
-  start <- sample(1:(total - n + 1), 1)
-  range <- df[start:(start + n - 1), ]
-  return(range)
-}
 
 conv_yml2tree <- function(yml, key) {
   yml[[key]] |>

@@ -17,8 +17,6 @@ train_server <- function(input, output, session) {
     return(account)
   })
 
-  # asset <- reactiveVal(account_info()$asset)
-
   # Data processing ------------------------------------------------------------
   start_date <- format(Sys.Date() - lubridate::years(.cnf$recent_years), "%Y%m%d")
   range_rows <- .cnf$recent_days + .cnf$train_days
@@ -74,7 +72,7 @@ train_server <- function(input, output, session) {
       filter(trade_date >= start_date) |>
       nrow()
       
-    start <- sample(1:(total - range_rows + 1), 1)
+    start <- sample((range_rows + 1):total, 1)
     return(start)
   })
 
@@ -103,14 +101,15 @@ train_server <- function(input, output, session) {
     right_idx <- left_idx - .cnf$recent_days # 窗口右边界
     
     # 防止右边界溢出
-    req(step_counter() <= .cnf$train_days)
+    req(step_n <= .cnf$train_days)
     
     # 数据截断到当前步数位置
     df <- df[right_idx:nrow(df), ] 
     
-    # 当前训练步数为“开盘”时，避免未来因子
+    # 当步数为“开盘”时，避免引入未来价格
     if(step_status() == "open") {
-      df[1, "close"] <- df[1, "open"]
+      future_cols <- c("close", "high", "low")
+      df[1, future_cols] <- df[1, "open"]
     }
     
     # 计算因子指标
@@ -218,7 +217,7 @@ train_server <- function(input, output, session) {
     # 前进步数
     if(step_status() == "open"){
       # 开盘状态
-      if(nrow(res)) {
+      if(!nrow(res)) {
         # 交易失败，前进0.5
         step_counter(step_counter() + 0.5)
       }else{
@@ -232,8 +231,6 @@ train_server <- function(input, output, session) {
       # 交易成功与否，前进0.5
       step_counter(step_counter() + 0.5)
     }
-    
-    print(records())
   })
 
   
@@ -273,22 +270,91 @@ train_server <- function(input, output, session) {
     updateActionButton(session, "wait", label = wait_label)
   })
 
+  
+  
+  # Charts ---------------------------------------------------------------------
+  # 训练图
+  train_chart <- reactive({
+    req(train_dat())
+    
+    train_dat() |>
+      candle_chart()
+  })
 
-
-
+  # Account changes ------------------------------------------------------------
+  # 计算单笔收益（含持仓中收益）
+  gains <- reactive({
+    if(!nrow(records())) {
+      return(data.frame())
+    }
+    
+    rcds <- select(records(), trade_direc, trade_price, trade_date)
+    
+    if(tail(rcds, 1)$trade_direc == "sell") {
+      # 已清仓收益
+      gains <- trade_gains(rcds)
+    }else{
+      # 持仓中收益
+      curr <- head(train_dat(), 1) # 当前
+      gains <- rbind(
+        rcds,
+        data.frame(
+          trade_direc = "sell",
+          trade_price = curr$close,
+          trade_date = curr$trade_date
+        )
+      ) |>
+        trade_gains()
+    }
+    
+    return(gains)
+  })
+  
+  # 资产变动
+  asset <- reactive({
+    req(account_info())
+    req(gains())
+    init_asset <- account_info()$asset # 初始资产
+    if(nrow(gains())){
+      asset <- init_asset * prod(1 + gains()$gains)
+    }else{
+      asset <- init_asset
+    }
+    return(asset)
+  })
+  
+  # Render ---------------------------------------------------------------------
   output$asset <- renderUI({
-    asset <- format(100000, big.mark = ",", scientific = FALSE)
+    asset <- format(asset(), big.mark = ",", scientific = FALSE)
     accountDisplay("总资产", asset)
   })
 
   output$gains <- renderUI({
-    gains <- "10%"
-    color <- "red"
+    gains <- round(asset() / account_info()$initial - 1, 4)
+    gains <- paste0(gains * 100, "%")
+    
+    if(gains >= 0){
+      color <- "red"
+    }else{
+      color <- "green"
+    }
     accountDisplay("累计收益", gains, color)
   })
 
   output$nums <- renderUI({
-    nums <- "10000"
+    nums <- account_info()$nums
     accountDisplay("训练次数", nums)
   })
+  
+  output$remaining_days <- renderText({
+    paste0("剩余K线：", .cnf$train_days - floor(step_counter()))
+  })
+  
+  output$train_chart <- renderPlot({
+    req(train_chart())
+    train_chart()
+  })
 }
+
+
+

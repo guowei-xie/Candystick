@@ -24,6 +24,8 @@ train_ui <- function(id) {
         )
       ),
       hr(),
+      # Step counter -----------------------------------------------------------
+      textOutput(ns("remaining_days")),
       
       # Action buttons ---------------------------------------------------------
       fluidRow(
