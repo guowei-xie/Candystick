@@ -23,60 +23,66 @@ train_server <- function(input, output, session) {
   start_date <- format(Sys.Date() - lubridate::years(.cnf$recent_years), "%Y%m%d")
   range_rows <- .cnf$recent_days + .cnf$train_days
   change <- reactiveVal(0)
-  # 随机基础行情数据
+  # 随机个股基础数据
   stk_daily <- eventReactive(change(), {
-    markets <- eval(parse(text = .cnf$market))
+    train_id <- uuid::UUIDgenerate() # 训练id
+    markets <- eval(parse(text = .cnf$market)) # 市场范围
 
+    # 个股代码
     stk_code <- basic |>
       filter(market %in% markets) |>
       pull(ts_code) %>%
       sample(1)
-
-    daily_dat <- try_api(
-      api,
-      api_name = "daily",
-      ts_code = stk_code
-    )
-
-    scope_rows <- daily_dat |>
-      filter(trade_date >= start_date) |>
-      nrow()
-
-    if (scope_rows >= range_rows) {
-      return(daily_dat)
-    } else {
-      change(change() + 1)
-    }
-  })
-
-  # 股票因子计算
-  fct_dat <- reactive({
-    req(stk_daily())
-    stk_code <- unique(stk_daily()$ts_code)
-    train_id <- uuid::UUIDgenerate()
-
+    
+    # 涨停数据
     stk_limit <- try_api(
       api,
       api_name = "stk_limit",
       ts_code = stk_code
     )
 
-    stk_daily() |>
-      mutate(train_id = train_id) |>
-      left_join(basic, by = "ts_code") |>
-      left_join(stk_limit, by = c("ts_code", "trade_date")) |>
-      # 添加：因子指标
-      add_factor_MA() |>
-      add_factor_Boll() |>
-      # 筛选：波段范围
+    # 个股日线行情数据
+    daily_dat <- try_api(
+      api,
+      api_name = "daily",
+      ts_code = stk_code
+    )
+      
+    scope_rows <- daily_dat |>
       filter(trade_date >= start_date) |>
-      random_range(n = range_rows)
+      nrow()
+
+    # 当数据行数是否满足训练窗口需求
+    if (scope_rows >= range_rows) {
+      # 满足时，返回个股的完整数据
+      res <- daily_dat |>
+        left_join(basic, by = "ts_code") |>
+        left_join(stk_limit, by = c("ts_code", "trade_date")) |>
+        mutate(train_id = train_id)
+      return(res)
+    } else {
+      # 不满足时，换股
+      change(change() + 1)
+    }
+  })
+  
+  # 随机起始点（用于抽取训练窗口数据）
+  rdm_start <- reactive({
+    req(stk_daily())
+    
+    total <- stk_daily() |>
+      filter(trade_date >= start_date) |>
+      nrow()
+      
+    start <- sample(1:(total - range_rows + 1), 1)
+    return(start)
   })
 
   # Dynamic control ------------------------------------------------------------
   # 计步状态
   step_counter <- reactiveVal(0)
   step_status <- reactiveVal("open")
+  
   observeEvent(step_counter(), {
     step <- step_counter()
     if (step %% 1 == 0) {
@@ -86,33 +92,35 @@ train_server <- function(input, output, session) {
     }
   })
 
-  # 移动窗口数据
+  # 动态训练窗口与指标数据
   train_dat <- reactive({
-    req(fct_dat())
-    req(step_counter())
-    df <- fct_dat()
-    mv <- floor(step_counter())
-    start <- .cnf$train_days - mv
-    end <- .cnf$train_days + .cnf$recent_days - mv
-
-    if (start > 0) {
-      rng_df <- df[start:end, ]
-
-      # 开盘时，当日因子以开盘价计算
-      if (step_status() == "open") {
-        rng_df[1, "close"] <- rng_df[1, "open"]
-
-        row <- rng_df |>
-          add_factor_MA() |>
-          add_factor_Boll() |>
-          head(1)
-
-        res <- rbind(row, rng_df[-1, ])
-      } else {
-        res <- rng_df
-      }
-      return(res)
+    req(stk_daily())
+    req(rdm_start())
+    
+    df <- stk_daily()
+    step_n <- floor(step_counter()) # 已进行步数
+    left_idx <- rdm_start() - step_n # 窗口左边界
+    right_idx <- left_idx - .cnf$recent_days # 窗口右边界
+    
+    # 防止右边界溢出
+    req(step_counter() <= .cnf$train_days)
+    
+    # 数据截断到当前步数位置
+    df <- df[right_idx:nrow(df), ] 
+    
+    # 当前训练步数为“开盘”时，避免未来因子
+    if(step_status() == "open") {
+      df[1, "close"] <- df[1, "open"]
     }
+    
+    # 计算因子指标
+    df <- df |>
+      add_factor_MA() |>
+      add_factor_Boll() 
+    
+    res <- df[1: .cnf$recent_days, ]
+    
+    return(res)
   })
 
   # Custom configuration -------------------------------------------------------
