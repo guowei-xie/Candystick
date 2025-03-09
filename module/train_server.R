@@ -2,21 +2,8 @@ train_server <- function(input, output, session) {
   ns <- session$ns
   .cnf <- config::get(config = "train")
   user_id <- "default"
-  
-  # Get account info -----------------------------------------------------------
-  account_info <- reactive({
-    account <- get_user_account(user_id)
-    if (!nrow(account)) {
-      account <- data.frame(
-        user_id = user_id,
-        initial = .cnf$initial,
-        asset = .cnf$initial,
-        nums = 0,
-        update_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
-      )
-    }
-    return(account)
-  })
+  account <- get_user_account(user_id)
+  print(account)
 
   # Data processing ------------------------------------------------------------
   start_date <- format(Sys.Date() - lubridate::years(.cnf$recent_years), "%Y%m%d")
@@ -233,7 +220,7 @@ train_server <- function(input, output, session) {
       step_counter(step_counter() + 0.5)
     }
   })
-  
+
   # 继续训练
   observeEvent(input$continue, {
     change(change() + 1)
@@ -319,23 +306,20 @@ train_server <- function(input, output, session) {
   })
 
   # 资产变动
-  asset <- reactive({
-    req(account_info())
-    req(gains())
-    init_asset <- account_info()$asset # 初始资产
+  init_asset <- reactiveVal(account$asset)
+  asset <- eventReactive(gains(), {
     if (nrow(gains())) {
-      asset <- init_asset * prod(1 + gains()$gains)
+      asset <- init_asset() * prod(1 + gains()$gains)
     } else {
-      asset <- init_asset
+      asset <- init_asset()
     }
     return(asset)
   })
-  
+
   # End of training ------------------------------------------------------------
   # 训练结束状态/次数
   end_of_training <- reactiveVal(FALSE)
-  train_nums <- reactiveVal(0)
-  
+  train_nums <- reactiveVal(account$nums)
   # 更新训练结束状态
   observe({
     req(step_counter())
@@ -345,24 +329,17 @@ train_server <- function(input, output, session) {
       end_of_training(FALSE)
     }
   })
-  
-  # 训练结束时强制平仓/交易记录落库
+
+  # 训练结束时强制平仓/数据落库/状态重置
   observeEvent(end_of_training(), {
     req(end_of_training() == TRUE)
-    if(holding()) {
-      row <- head(train_dat(), 1)
+    row <- head(train_dat(), 1)
+    if (holding()) {
       res <- trade_record("sell", row$close, row)
       records(bind_rows(records(), res))
     }
-    # 交易记录落库/重置
-    write_df_to_db(records(), "trade_records")
-    records(data.frame())
-  })
-  
-  # 训练结束时训练记录落库
-  observeEvent(end_of_training(), {
-    req(end_of_training() == TRUE)
-    row <- head(stk_daily(), 1)
+
+    # 训练记录落库
     data.frame(
       user_id = user_id,
       train_id = row$train_id,
@@ -375,40 +352,49 @@ train_server <- function(input, output, session) {
       create_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
     ) |>
       write_df_to_db("train_records")
-  })
-  
-  # 训练结束时账户变动落库
-  observeEvent(end_of_training(), {
-    req(end_of_training() == TRUE)
+
+    # 训练次数+1
     train_nums(train_nums() + 1)
-    
+
+    # 账户变动落库
     data.frame(
-      user_id = account_info()$user_id,
-      initial = account_info()$initial,
+      user_id = account$user_id,
+      initial = account$initial,
       asset = asset(),
       nums = train_nums(),
       update_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
     ) |>
       write_df_to_db("user_account")
+
+    # 账户初始资金更新
+    init_asset(asset())
+
+    # 交易记录落库
+    write_df_to_db(records(), "trade_records")
+    # 交易记录重置
+    records(data.frame())
+
+    # 持仓状态重置
+    holding(0)
   })
-  
+
+
   # 继续训练按钮事件
   observeEvent(input$continue, {
     end_of_training(FALSE)
     step_counter(0)
     change(change() + 1)
-    
   })
-  
+
   # 隐藏交易按钮/展示继续训练按钮
   observeEvent(end_of_training(), {
-    if(end_of_training()){
+    if (end_of_training()) {
       shinyjs::hide("price")
       shinyjs::hide("price_tag")
       shinyjs::hide("trade")
       shinyjs::hide("wait")
       shinyjs::show("continue")
-    }else {
+    } else {
       shinyjs::hide("continue")
       shinyjs::show("price")
       shinyjs::show("price_tag")
@@ -416,7 +402,7 @@ train_server <- function(input, output, session) {
       shinyjs::show("wait")
     }
   })
-  
+
 
   # Render output --------------------------------------------------------------
   output$asset <- renderUI({
@@ -425,7 +411,7 @@ train_server <- function(input, output, session) {
   })
 
   output$gains <- renderUI({
-    gains <- round(asset() / account_info()$initial - 1, 4)
+    gains <- round(asset() / account$initial - 1, 4)
     gains <- paste0(gains * 100, "%")
 
     if (gains >= 0) {
@@ -437,13 +423,14 @@ train_server <- function(input, output, session) {
   })
 
   output$nums <- renderUI({
-    nums <- account_info()$nums
-    accountDisplay("训练次数", nums)
+    accountDisplay("训练次数", train_nums())
   })
 
   output$remaining_days <- renderText({
     paste0("剩余K线：", .cnf$train_days - floor(step_counter()))
   })
 
-  output$train_chart <- renderPlot({train_chart()})
+  output$train_chart <- renderPlot({
+    train_chart()
+  })
 }

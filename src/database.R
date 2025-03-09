@@ -15,7 +15,18 @@ get_user_account <- function(user_id){
   sql <- str_glue(
     "SELECT * FROM user_account WHERE user_id = '{user_id}' ORDER BY update_time DESC LIMIT 1;"
   )
-  sql_query(sql)
+  res <- sql_query(sql)
+  
+  if(!nrow(res)){
+    res <- data.frame(
+      user_id = user_id,
+      initial = .cnf$initial,
+      asset = .cnf$initial,
+      nums = 0,
+      update_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+    )
+  }
+  return(res)
 }
 
 write_df_to_db <- function(df, tbl, type="append"){
