@@ -67,7 +67,6 @@ train_ui <- function(id) {
         inputId = ns("continue"),
         label = "继续训练",
         width = "100%",
-        style = "display: none;",
         icon = icon("play-circle")
       ),
       

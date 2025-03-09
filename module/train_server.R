@@ -2,6 +2,7 @@ train_server <- function(input, output, session) {
   ns <- session$ns
   .cnf <- config::get(config = "train")
   user_id <- "default"
+  
   # Get account info -----------------------------------------------------------
   account_info <- reactive({
     account <- get_user_account(user_id)
@@ -146,7 +147,7 @@ train_server <- function(input, output, session) {
 
   # Fill in the price ----------------------------------------------------------
   # 标签填价
-  observeEvent(input$price_tag, {
+  observeEvent(c(input$price_tag, train_dat()), {
     row <- head(train_dat(), 1)
     col <- pluck(custom$colname_mapping, input$price_tag)
 
@@ -231,6 +232,11 @@ train_server <- function(input, output, session) {
       # 交易成功与否，前进0.5
       step_counter(step_counter() + 0.5)
     }
+  })
+  
+  # 继续训练
+  observeEvent(input$continue, {
+    change(change() + 1)
   })
 
 
@@ -324,8 +330,95 @@ train_server <- function(input, output, session) {
     }
     return(asset)
   })
+  
+  # End of training ------------------------------------------------------------
+  # 训练结束状态/次数
+  end_of_training <- reactiveVal(FALSE)
+  train_nums <- reactiveVal(0)
+  
+  # 更新训练结束状态
+  observe({
+    req(step_counter())
+    if (step_counter() > .cnf$train_days) {
+      end_of_training(TRUE)
+    } else {
+      end_of_training(FALSE)
+    }
+  })
+  
+  # 训练结束时强制平仓/交易记录落库
+  observeEvent(end_of_training(), {
+    req(end_of_training() == TRUE)
+    if(holding()) {
+      row <- head(train_dat(), 1)
+      res <- trade_record("sell", row$close, row)
+      records(bind_rows(records(), res))
+    }
+    # 交易记录落库/重置
+    write_df_to_db(records(), "trade_records")
+    records(data.frame())
+  })
+  
+  # 训练结束时训练记录落库
+  observeEvent(end_of_training(), {
+    req(end_of_training() == TRUE)
+    row <- head(stk_daily(), 1)
+    data.frame(
+      user_id = user_id,
+      train_id = row$train_id,
+      ts_code = row$ts_code,
+      start_date = start_date,
+      rdm_start = rdm_start(),
+      train_days = .cnf$train_days,
+      recent_days = .cnf$recent_days,
+      recent_years = .cnf$recent_years,
+      create_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+    ) |>
+      write_df_to_db("train_records")
+  })
+  
+  # 训练结束时账户变动落库
+  observeEvent(end_of_training(), {
+    req(end_of_training() == TRUE)
+    train_nums(train_nums() + 1)
+    
+    data.frame(
+      user_id = account_info()$user_id,
+      initial = account_info()$initial,
+      asset = asset(),
+      nums = train_nums(),
+      update_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
+    ) |>
+      write_df_to_db("user_account")
+  })
+  
+  # 继续训练按钮事件
+  observeEvent(input$continue, {
+    end_of_training(FALSE)
+    step_counter(0)
+    change(change() + 1)
+    
+  })
+  
+  # 隐藏交易按钮/展示继续训练按钮
+  observeEvent(end_of_training(), {
+    if(end_of_training()){
+      shinyjs::hide("price")
+      shinyjs::hide("price_tag")
+      shinyjs::hide("trade")
+      shinyjs::hide("wait")
+      shinyjs::show("continue")
+    }else {
+      shinyjs::hide("continue")
+      shinyjs::show("price")
+      shinyjs::show("price_tag")
+      shinyjs::show("trade")
+      shinyjs::show("wait")
+    }
+  })
+  
 
-  # Render ---------------------------------------------------------------------
+  # Render output --------------------------------------------------------------
   output$asset <- renderUI({
     asset <- format(asset(), big.mark = ",", scientific = FALSE)
     accountDisplay("总资产", asset)

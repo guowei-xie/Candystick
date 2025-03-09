@@ -13,7 +13,26 @@ sql_query <- function(sql){
 
 get_user_account <- function(user_id){
   sql <- str_glue(
-    "SELECT * FROM user_account WHERE user_id = '{user_id}';"
+    "SELECT * FROM user_account WHERE user_id = '{user_id}' ORDER BY update_time DESC LIMIT 1;"
   )
   sql_query(sql)
+}
+
+write_df_to_db <- function(df, tbl, type="append"){
+  cnf <- config::get(config = "database")
+  
+  db <- dbConnect(
+    SQLite(),
+    dbname = paste0(cnf$path, cnf$name)
+  )
+  
+  if(type == "append"){
+    dbWriteTable(db, tbl, df, append = TRUE)
+  }
+  
+  if(type == "overwrite"){
+    dbWriteTable(db, tbl, df, overwrite = TRUE)
+  }
+  
+  dbDisconnect(db)
 }

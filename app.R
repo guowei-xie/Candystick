@@ -19,7 +19,7 @@ source("global.R")
 
 ui <- fluidPage(
   theme = shinytheme(cnf$theme),
-  useShinyjs(), 
+  useShinyjs(),
   tags$head(
     tags$link(rel = "stylesheet", href = "styles.css")
   ),
