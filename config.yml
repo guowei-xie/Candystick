@@ -2,6 +2,7 @@ default:
   dev: TRUE
   title: Candystick
   theme: yeti
+  tushare_token:  your token # https://tushare.pro/ 平台注册账号并获取
 
 database:
   path: db/
@@ -12,4 +13,4 @@ train:
   market: c("主板", "创业板", "北交所", "科创板")
   recent_years: 3
   recent_days: 120 # 过往天数
-  train_days: 6 # 训练天数
+  train_days: 30 # 训练天数
