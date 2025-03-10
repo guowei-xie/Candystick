@@ -49,6 +49,28 @@ install.packages(c("shiny", "shinythemes", "shinyWidgets", "shinyjs", "tidyverse
 source("init.R")
 ```
 
+4. 添加环境变量
+
+首先需要在 [Tushare Pro](https://tushare.pro/) 平台注册账号并获取 token。
+
+对于 bash 用户，编辑 `~/.bashrc`：
+```bash
+echo 'export tushare_token="你的token"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+对于 zsh 用户，编辑 `~/.zshrc`：
+```bash
+echo 'export tushare_token="你的token"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+验证环境变量是否设置成功：
+```bash
+echo $tushare_token
+```
+
+
 ## 配置说明
 
 系统配置文件为 `config.yml`，主要配置项包括：
@@ -110,9 +132,6 @@ shiny::runApp()
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 提交 Pull Request
 
-## 许可证
-
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 
 ## 联系方式
 
