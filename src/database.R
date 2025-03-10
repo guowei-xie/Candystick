@@ -12,7 +12,8 @@ sql_query <- function(sql){
 }
 
 get_user_account <- function(user_id){
-  cnf <- config::get(config = "database")
+  db_cnf <- config::get(config = "database")
+  train_cnf <- config::get(config = "train")
   
   sql <- str_glue(
     "SELECT * FROM user_account WHERE user_id = '{user_id}' ORDER BY update_time DESC LIMIT 1;"
@@ -22,8 +23,8 @@ get_user_account <- function(user_id){
   if(!nrow(res)){
     res <- data.frame(
       user_id = user_id,
-      initial = cnf$initial,
-      asset = cnf$initial,
+      initial = train_cnf$initial,
+      asset = train_cnf$initial,
       nums = 0,
       update_time = format(Sys.time(), "%Y-%m-%d %H:%M:%S")
     )
