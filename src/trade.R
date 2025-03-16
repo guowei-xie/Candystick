@@ -2,6 +2,10 @@
 trade_record <- function(direction, price, row){
   # 交易价格是否在允许范围
   allow <- price <= row$high & price >= row$low
+  print(paste("price:", price))
+  print(paste("high:", row$high))
+  print(paste("low:", row$low))
+  print(paste("allow:", allow))
   
   if(allow){
     res <- data.frame(

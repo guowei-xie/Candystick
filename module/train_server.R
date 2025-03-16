@@ -195,6 +195,7 @@ train_server <- function(input, output, session) {
     direction <- ifelse(holding(), "sell", "buy")
 
     res <- trade_record(direction, price, row)
+    glimpse(res)
 
     # 交易记录和持仓状态
     if (nrow(res)) {
