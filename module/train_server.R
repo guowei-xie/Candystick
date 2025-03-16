@@ -3,7 +3,6 @@ train_server <- function(input, output, session) {
   .cnf <- config::get(config = "train")
   user_id <- "default"
   account <- get_user_account(user_id)
-  print(account)
 
   # Data processing ------------------------------------------------------------
   start_date <- format(Sys.Date() - lubridate::years(.cnf$recent_years), "%Y%m%d")
@@ -61,6 +60,7 @@ train_server <- function(input, output, session) {
       nrow()
 
     start <- sample((range_rows + 1):total, 1)
+    message("获取训练数据随机波段起点...")
     return(start)
   })
 
@@ -92,7 +92,8 @@ train_server <- function(input, output, session) {
     req(step_n <= .cnf$train_days)
 
     # 数据截断到当前步数位置
-    df <- df[right_idx:nrow(df), ]
+    # df <- df[right_idx:nrow(df), ]
+    df <- df[right_idx:rdm_start(), ]
 
     # 当步数为“开盘”时，避免引入未来价格
     if (step_status() == "open") {
@@ -274,7 +275,7 @@ train_server <- function(input, output, session) {
     train_dat() |>
       candle_chart() |>
       add_price_line(input$price)
-  })
+  }) |> debounce(500)
 
   # Account changes ------------------------------------------------------------
   # 计算单笔收益（含持仓中收益）
@@ -431,6 +432,7 @@ train_server <- function(input, output, session) {
   })
 
   output$train_chart <- renderPlot({
+    req(train_chart())
     train_chart()
   })
 }
