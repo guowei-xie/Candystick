@@ -1,31 +1,42 @@
 factor_indicator:
   MA相关: 5日均线,10日均线,20日均线,30日均线,60日均线,90日均线,120日均线,180日均线,360日均线 
-  Boll相关: Boll上轨线,Boll中轨线,Boll下轨线
+  Boll相关: Boll上轨,Boll中轨,Boll下轨
 
 price_tag:
   Daily相关: 今日开盘价,昨日收盘价,涨停价,跌停价
-  MA相关: 5日均价,10日均价,20日均价,30日均价,60日均价,90日均价,120日均价,180日均价,360日均价 
-  Boll相关: Boll上轨价,Boll中轨价,Boll下轨价
+  MA相关: 5日均线,10日均线,20日均线,30日均线,60日均线,90日均线,120日均线,180日均线,360日均线 
+  Boll相关: Boll上轨,Boll中轨,Boll下轨
   
 default_selected:
-  factor_indicator: 5日均线,10日均线,20日均线,30日均线,Boll上轨线,Boll中轨线,Boll下轨线
-  price_tag: Daily相关, 5日均价,10日均价,20日均价,30日均价,Boll上轨价,Boll中轨价,Boll下轨价
+  factor_indicator: 5日均线,10日均线,20日均线,30日均线,Boll上轨,Boll中轨,Boll下轨
+  price_tag: Daily相关, 5日均线,10日均线,20日均线,30日均线,Boll上轨线,Boll中轨线,Boll下轨线
   
 colname_mapping:
-  5日均价: ma_5
-  10日均价: ma_10
-  20日均价: ma_20
-  30日均价: ma_30
-  60日均价: ma_60
-  90日均价: ma_90
-  120日均价: ma_120
-  180日均价: ma_180
-  360日均价: ma_360
+  5日均线: ma_5
+  10日均线: ma_10
+  20日均线: ma_20
+  30日均线: ma_30
+  60日均线: ma_60
+  90日均线: ma_90
+  120日均线: ma_120
+  180日均线: ma_180
+  360日均线: ma_360
   今日开盘价: open
   昨日收盘价: pre_close
   今日收盘价: close
   涨停价: up_limit
   跌停价: down_limit
-  Boll上轨价: up_band
-  Boll中轨价: md_band
-  Boll下轨价: dn_band
+  Boll上轨: up_band
+  Boll中轨: md_band
+  Boll下轨: dn_band
+
+ma_color:
+  5日均线: "#000000"
+  10日均线: "#08519c"
+  20日均线: "#feb24c"
+  30日均线: "#dd3497"
+  60日均线: "#006d2c"
+  90日均线: "#67000d"
+  120日均线: "#49006a"
+  180日均线: "#7f0000"
+  360日均线: "#d4b9da"

@@ -60,7 +60,6 @@ train_server <- function(input, output, session) {
       nrow()
 
     start <- sample((range_rows + 1):total, 1)
-    message("获取训练数据随机波段起点...")
     return(start)
   })
 
@@ -103,8 +102,8 @@ train_server <- function(input, output, session) {
 
     # 计算因子指标
     df <- df |>
-      add_factor_MA() |>
-      add_factor_Boll()
+      add_factor_MA(input$fct_config) |>
+      add_factor_Boll(input$fct_config)
 
     res <- df[1:.cnf$recent_days, ]
 
@@ -271,9 +270,11 @@ train_server <- function(input, output, session) {
   train_chart <- reactive({
     req(train_dat())
     req(input$price)
-
+    
     train_dat() |>
       candle_chart() |>
+      add_ma_lines(input$fct_config) |>
+      add_boll_lines(input$fct_config) |>
       add_price_line(input$price)
   }) |> debounce(500)
 

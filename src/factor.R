@@ -1,6 +1,11 @@
-add_factor_MA <- function(df, widths = c(5, 10, 20, 30, 60, 90, 120, 180, 360)) {
+add_factor_MA <- function(df, tags) {
+  ma_tags <-  tags[grep("日均线$", tags)]
+  if(!length(ma_tags)) return(df)
+  
+  widths <- gsub("日均线", "", ma_tags) |> as.numeric()
+  
   df <- arrange(df, desc(trade_date))
-
+  
   if (length(widths)) {
     meta_ <- widths |>
       map(~ {
@@ -18,7 +23,10 @@ add_factor_MA <- function(df, widths = c(5, 10, 20, 30, 60, 90, 120, 180, 360)) 
   return(res)
 }
 
-add_factor_Boll <- function(df, n = 20, sd = 2, maType = "SMA") {
+add_factor_Boll <- function(df, tags, n = 20, sd = 2, maType = "SMA") {
+  boll_tags <-  tags[grep("Boll", tags)]
+  if(!length(boll_tags)) return(df)
+  
   df |>
     arrange(trade_date) |>
     mutate(

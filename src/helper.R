@@ -20,5 +20,3 @@ conv_yml2tree <- function(yml, key) {
     )) |>
     create_tree()
 }
-
-

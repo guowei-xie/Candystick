@@ -56,3 +56,48 @@ add_price_line <- function(plt, price){
     )
 }
 
+
+# 添加MA线
+add_ma_lines <- function(plt, tags){
+  ma_tags <-  tags[grep("日均线$", tags)]
+  if(!length(ma_tags)) return(plt)
+
+  ma_cols <- unname(custom$colname_mapping[ma_tags]) |> unlist()
+  l_colors <- unname(custom$ma_color[ma_tags]) |> unlist()
+  
+  l_code_str <- "geom_line(aes(y = {ma_col}, group = 1), col = '{l_color}')"
+  
+  l_code <- map2(ma_cols, l_colors, ~{
+    ma_col <- .x
+    l_color <- .y
+    str_glue(l_code_str)
+  }) |>
+    paste(collapse = "+")
+  
+  expr_str <- paste0("plt + ", l_code)
+  
+  eval(parse(text = expr_str))
+}
+
+
+# 添加Boll线
+add_boll_lines <- function(plt, tags){
+  boll_tags <-  tags[grep("Boll", tags)]
+  boll_tags <- boll_tags[!str_detect(boll_tags, "相关")]
+  
+  if(!length(boll_tags)) return(plt)
+  
+  boll_cols <- unname(custom$colname_mapping[boll_tags]) |> unlist()
+  
+  l_code_str <- "geom_line(aes(y = {boll_col}, group = 1), lty = 4)"
+  
+  l_code <- map(boll_cols, ~{
+    boll_col <- .x
+    str_glue(l_code_str)
+  }) |>
+    paste(collapse = "+")
+  
+  expr_str <- paste0("plt + ", l_code)
+  
+  eval(parse(text = expr_str))
+}
